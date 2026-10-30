@@ -1,0 +1,23 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "apps@equilibriumos.com",
+                "Name": "Barnak Zlatko",
+                "Project": "EQuilibriumOS"
+            }
+
+        ],
+        "Category": "Online Services",
+        "Description": "Add Gemini to your desktop.",
+        "Icon": "plasma-symbolic",
+        "Id": "org.kde.plasma.eqgemini",
+        "License": "GPL-2.0+",
+        "Name": "EQ-Gemini",
+        "Version": "1.0.0",
+        "Website": "plasma.kde.org",
+        "EnabledByDefault": true
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
