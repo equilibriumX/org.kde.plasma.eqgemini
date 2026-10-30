@@ -1,5 +1,5 @@
-/***************************************************************************
- *   Copyright 2026 by Barnak Zlatko <equilibrium@equilibriumos.com>             *
+/***************************************************************************            *
+ *   Copyright 2026 by Barnak Zlatko <equilibrium@barnak.co.rs>             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -32,13 +32,12 @@ PlasmoidItem {
     height: Kirigami.Units.gridUnit * 22
 
     // Ograničenja minimalne veličine (širina x visina)
-    Layout.minimumWidth: 600
-    Layout.minimumHeight: 650
-
+    Layout.minimumWidth: 450
+    Layout.minimumHeight: 750
 
     Plasmoid.backgroundHints: Plasma.StandardBackground
 
-// 1. KOMPAKTNI PRIKAZ NA PANELU (Sređeno da nema preklapanja)
+    // 1. KOMPAKTNI PRIKAZ NA PANELU
     compactRepresentation: Item {
         Layout.minimumWidth: Kirigami.Units.iconSize.small
         Layout.minimumHeight: Kirigami.Units.iconSize.small
@@ -61,20 +60,16 @@ PlasmoidItem {
         return "assets/gemini-kchat-icon.svg";
     }
 
-    fullRepresentation: ColumnLayout {
-
-        // Ograničenja minimalne veličine i za iskačući prozor (popup)
-        Layout.minimumWidth: 600
-        Layout.minimumHeight: 650
-
+    // 2. ISKAČUĆI PROZOR (POPUP) SA PREMEŠTENIM DUGMETOM
+    fullRepresentation: Item {
+        Layout.minimumWidth: 450
+        Layout.minimumHeight: 750
 
         anchors.fill: parent
-        spacing: 0
 
-        // 1. GLAVNI PROZOR (WebEngineView)
+        // GLAVNI PROZOR (WebEngineView zauzima 100% prostora)
         Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+            anchors.fill: parent
 
             PlasmaComponents.Menu {
                 id: linkContextMenu
@@ -101,7 +96,6 @@ PlasmoidItem {
                 clip: true
                 zoomFactor: 1.0
 
-                // Sprečavamo da Chromium uguši JS procese dok je u popup-u
                 visible: true
                 focus: Plasmoid.expanded
 
@@ -111,7 +105,7 @@ PlasmoidItem {
                 settings.javascriptEnabled: true
 
                 profile: WebEngineProfile {
-                    storageName: "GeminiPWAProfile"
+                    storageName: "EQGeminiProfile"
                     offTheRecord: false
                     httpCacheMaximumSize: 100 * 1024 * 1024
                 }
@@ -181,90 +175,95 @@ PlasmoidItem {
             }
         }
 
-        // 2. KONTROLE I "ASK GEMINI" POLJE NA DNU
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.margins: 2
+        // LEVA PLUTAJUĆA TRAKA (Samo navigacija i početna)
+        Rectangle {
+            id: leftFloatingBar
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: 1
+            anchors.bottomMargin: 1
 
-            PlasmaComponents.Button {
-                icon.name: "go-previous"
-                onClicked: webview.goBack()
-                enabled: webview.canGoBack
+            height: 34
+            width: leftRow.width + 6
+            radius: 5
+
+            color: Kirigami.Theme.backgroundColor
+            opacity: 0.90
+            border.width: 0
+            z: 10
+
+            RowLayout {
+                id: leftRow
+                anchors.centerIn: parent
+                spacing: 2
+
+                PlasmaComponents.Button {
+                    icon.name: "go-previous"
+                    onClicked: webview.goBack()
+                    enabled: webview.canGoBack
+                }
+
+                PlasmaComponents.Button {
+                    icon.name: "go-next"
+                    onClicked: webview.goForward()
+                    enabled: webview.canGoForward
+                }
+
             }
+        }
 
-            PlasmaComponents.Button {
-                icon.name: "go-next"
-                onClicked: webview.goForward()
-                enabled: webview.canGoForward
-            }
+        // DESNA PLUTAJUĆA TRAKA (Plus dugme i Refresh / Stop)
+        Rectangle {
+            id: rightFloatingBar
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.rightMargin: 1
+            anchors.bottomMargin: 1
 
-            PlasmaComponents.Button {
-                icon.name: "go-home"
-                onClicked: webview.url = "https://gemini.google.com"
-            }
+            height: 34
+            width: rightRow.width + 6
+            radius: 5
 
-            PlasmaComponents.Button {
-                icon.name: "list-add"
-                onClicked: webview.url = "https://gemini.google.com/notebooks/splash?dest=create/"
-            }
+            color: Kirigami.Theme.backgroundColor
+            opacity: 0.90
+            border.width: 0
+            z: 10
 
-            PlasmaComponents.TextField {
-                id: promptField
-                Layout.fillWidth: true
-                placeholderText: "Ask Gemini..."
+            RowLayout {
+                id: rightRow
+                anchors.centerIn: parent
+                spacing: 2
 
-                onAccepted: {
-                    if (text.trim() !== "") {
-                        var jsCode = `
-                            (function() {
-                                var input = document.querySelector('rich-textarea p, textarea, [contenteditable="true"]');
-                                if (input) {
-                                    input.focus();
-                                    document.execCommand('insertText', false, "` + text.replace(/"/g, '\\"') + `");
-                                    setTimeout(function() {
-                                        var sendBtn = document.querySelector('button[aria-label*="Send"], button.send-button, button[mat-fab]');
-                                        if (sendBtn) {
-                                            sendBtn.click();
-                                        }
-                                    }, 200);
-                                }
-                            })();
-                        `;
-                        webview.runJavaScript(jsCode);
-                        text = "";
+                PlasmaComponents.ToolButton {
+                    id: infoButton
+                    visible: false
+                    property var cb
+                    onClicked: cb()
+                    function show(buttonText, iconName, tooltipText, callback) {
+                        infoButton.text = buttonText;
+                        infoButton.icon.name = iconName;
+                        infoButton.cb = callback;
+                        infoButton.visible = true;
+                    }
+                    function dismiss() {
+                        infoButton.visible = false;
                     }
                 }
 
-                onActiveFocusChanged: {
-                    if (activeFocus) {
-                        selectAll();
-                    }
-                }
-            }
-
-            PlasmaComponents.ToolButton {
-                id: infoButton
-                visible: false
-
-                property var cb
-
-                onClicked: cb()
-
-                function show(buttonText, iconName, tooltipText, callback) {
-                    infoButton.text = buttonText;
-                    infoButton.icon.name = iconName;
-                    infoButton.cb = callback;
-                    infoButton.visible = true;
+                PlasmaComponents.Button {
+                    icon.name: "go-home"
+                    onClicked: webview.url = "https://gemini.google.com"
                 }
 
-                function dismiss() {
-                    infoButton.visible = false;
+                PlasmaComponents.Button {
+                    icon.name: "list-add"
+                    onClicked: webview.url = "https://gemini.google.com/notebooks/splash?dest=create/"
                 }
-            }
 
-            PlasmaComponents.Button {
-                icon.name: webview.loading ? "process-stop" : "view-refresh"
-                onClicked: webview.loading ? webview.stop() : webview.reload()
+                PlasmaComponents.Button {
+                    icon.name: webview.loading ? "process-stop" : "view-refresh"
+                    onClicked: webview.loading ? webview.stop() : webview.reload()
+                }
             }
         }
     }
