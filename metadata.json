@@ -14,7 +14,7 @@
         "Id": "org.kde.plasma.eqgemini",
         "License": "GPL-2.0+",
         "Name": "EQ-Gemini",
-        "Version": "1.0.0",
+        "Version": "1.1.0",
         "Website": "plasma.kde.org",
         "EnabledByDefault": true
     },
