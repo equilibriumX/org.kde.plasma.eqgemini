@@ -13,8 +13,8 @@
         "Icon": "plasma-symbolic",
         "Id": "org.kde.plasma.eqgemini",
         "License": "GPL-2.0+",
-        "Name": "EQ-Gemini",
-        "Version": "1.1.1",
+        "Name": "EQ-Gem",
+        "Version": "1.1.2",
         "Website": "plasma.kde.org",
         "EnabledByDefault": true
     },
